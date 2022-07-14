@@ -1,24 +1,56 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const date = require(__dirname + "/date.js");
 
 const app = express();
 
+let items = ["First item", "Second item", "Third item", "Fourth item"];
+let workItems = [];
+
 app.set('view engine', 'ejs');
 
-app.get("/", function(req, res){
-  var today = new Date();
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(express.static("public"))
 
-  if (today.getDay() === 6 || today.getDay() === 0) {
-    res.write("<h1>It's weekend</h1>");
+app.get("/", function(req, res){
+
+  let day = date.getDate();
+
+  res.render("list", {
+    listTitle: day,
+    newListItems: items
+  });
+
+});
+
+app.post("/", function(req, res){
+  let item = req.body.newItem;
+  if (req.body.list === "Work") { // if the item is added on /work route
+    workItems.push(item);
+    res.redirect("/work");
   }
   else {
-    res.sendFile(__dirname + "/index.html");
+    items.push(item);
+    res.redirect("/"); // this will get us back to app.get
   }
 });
 
+app.get("/work", function(req, res){
+  res.render("list", {
+    listTitle: "Work List",
+    newListItems: workItems
+  });
+});
 
+app.post("/work", function(req, res) {
+  let item = req.body.newItem;
+  workItems.push(item);
+  res.redirect("work"); // trigger app.get("/work")
+});
 
-
+app.get("/about", function(req, res){
+  res.render("about");
+});
 
 
 app.listen(3000, function(){
